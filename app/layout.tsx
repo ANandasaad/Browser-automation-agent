@@ -6,7 +6,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
-
+import "@clerk/ui/themes/shadcn.css"
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
 
 const fontMono = Geist_Mono({
@@ -33,21 +33,7 @@ export default function RootLayout({
       <body>
         <ClerkProvider appearance={{ theme: shadcn }}>
           <ThemeProvider>
-            <header className="flex items-center justify-end p-4">
-              <Show when="signed-out">
-                 <SignInButton mode="modal">
-                    <Button variant="ghost">Sign In</Button>
-                  </SignInButton>
-
-  <SignUpButton mode="modal">
-                    <Button>Sign Up</Button>
-                  </SignUpButton>
-              </Show>
-              <Show when="signed-in">
-                <UserButton />
-              </Show>
-            </header>
-            {children}
+                  {children}
             <Toaster />
           </ThemeProvider>
         </ClerkProvider>
