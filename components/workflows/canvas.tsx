@@ -16,7 +16,15 @@ import {
   type OnConnect,
   type Node,
   type Edge,
+  NodeTypes,
+  useNodesState,
+  useEdgesState
 } from "@xyflow/react"
+
+import {StepNode} from '@/components/workflows/step-node'
+import type {StepNodeType} from '@/components/workflows/nodes/node-registry'
+
+const nodeTypes: NodeTypes= {step: StepNode }
 
 function useMounted() {
   return useSyncExternalStore(
@@ -26,32 +34,26 @@ function useMounted() {
   )
 }
 
-const initialNodes: Node[] = [
-  { id: "1", position: { x: 0, y: 0 }, data: { label: "Node 1" } },
-  { id: "2", position: { x: 0, y: 100 }, data: { label: "Node 2" } },
-  { id: "3", position: { x: 200, y: 50 }, data: { label: "Node 3" } },
+const initialNodes: StepNodeType[] = [
+  {
+    id:"start",
+    type: "step",
+    position: {x:0, y:0},
+    data: {type: "start", kind: "trigger", title: "Start", values:{}}
+  }
 ]
+  
 
 const initialEdges: Edge[] = [
-  { id: "e1-2", source: "1", target: "2" },
-  { id: "e1-3", source: "1", target: "3" },
 ]
 
 export function Canvas() {
   const { resolvedTheme } = useTheme()
   const mounted = useMounted()
-  const [nodes, setNodes] = useState(initialNodes)
-  const [edges, setEdges] = useState(initialEdges)
+  const [nodes, , onNodesChange] = useNodesState(initialNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 
-  const onNodesChange: OnNodesChange = useCallback(
-    (changes) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
-    [],
-  )
-
-  const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
-    [],
-  )
+ 
 
   const onConnect: OnConnect = useCallback(
     (params) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
@@ -61,6 +63,7 @@ export function Canvas() {
   return (
     <div className="size-full">
       <ReactFlow
+       nodeTypes={nodeTypes}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
