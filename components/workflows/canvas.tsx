@@ -1,25 +1,20 @@
 "use client"
 
-import { useState, useCallback, useSyncExternalStore } from "react"
+import { useSyncExternalStore } from "react"
 import { useTheme } from "next-themes"
 import {
   ReactFlow,
-  applyNodeChanges,
-  applyEdgeChanges,
-  addEdge,
   Background,
   Controls,
   MiniMap,
   ConnectionLineType,
-  type OnNodesChange,
-  type OnEdgesChange,
-  type OnConnect,
-  type Node,
   type Edge,
   NodeTypes,
-  useNodesState,
-  useEdgesState
 } from "@xyflow/react"
+import { useLiveblocksFlow , Cursors} from "@liveblocks/react-flow"
+import "@xyflow/react/dist/style.css";
+import "@liveblocks/react-flow/styles.css"
+import "@liveblocks/react-ui/styles.css";
 
 import {StepNode} from '@/components/workflows/step-node'
 import type {StepNodeType} from '@/components/workflows/nodes/node-registry'
@@ -50,25 +45,32 @@ const initialEdges: Edge[] = [
 export function Canvas() {
   const { resolvedTheme } = useTheme()
   const mounted = useMounted()
-  const [nodes, , onNodesChange] = useNodesState(initialNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
-
- 
-
-  const onConnect: OnConnect = useCallback(
-    (params) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
-    [],
-  )
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onDelete,
+  } = useLiveblocksFlow({
+    nodes: {
+      initial: initialNodes,
+    },
+    edges: {
+      initial: initialEdges,
+    },
+  })
 
   return (
     <div className="size-full">
       <ReactFlow
        nodeTypes={nodeTypes}
-        nodes={nodes}
-        edges={edges}
+        nodes={nodes ?? undefined}
+        edges={edges ?? undefined}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onDelete={onDelete}
         colorMode={mounted && resolvedTheme === "dark" ? "dark" : "light"}
         fitView
         connectionLineType={ConnectionLineType.SmoothStep}
@@ -89,6 +91,7 @@ export function Canvas() {
       >
         <Background />
         <Controls />
+        <Cursors />
         <MiniMap />
       </ReactFlow>
     </div>
