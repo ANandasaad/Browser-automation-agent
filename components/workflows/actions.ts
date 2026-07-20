@@ -4,6 +4,9 @@ import { auth } from "@clerk/nextjs/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
+import type { helloWorldTask } from "@/src/trigger/example"
+import { tasks } from "@trigger.dev/sdk"
+
 import { createWorkflow } from "./data"
 
 export async function createWorkflowAction(name: string) {
@@ -17,4 +20,11 @@ export async function createWorkflowAction(name: string) {
 
   revalidatePath("/", "layout")
   redirect(`/workflows/${workflow.id}`)
+}
+
+export async function runWorkflowAction() {
+  const handle = await tasks.trigger<typeof helloWorldTask>("hello-dashboard", {
+    message: "Hello from my app!",
+  })
+  return { runId: handle.id, publicAccessToken: handle.publicAccessToken }
 }
