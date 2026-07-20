@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server"
+import Link from "next/link"
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -10,8 +10,13 @@ import { WorkflowIcon } from "lucide-react"
 
 import { listWorkflows } from "./workflows/data"
 
-export async function WorkflowSidebarList() {
-  const { orgId } = await auth()
+export async function WorkflowSidebarList({
+  activeWorkflowId,
+  orgId,
+}: {
+  activeWorkflowId?: string
+  orgId?: string | null
+}) {
   const workflows = orgId ? await listWorkflows(orgId) : []
 
   return (
@@ -20,9 +25,16 @@ export async function WorkflowSidebarList() {
       <SidebarMenu>
         {workflows.map((workflow) => (
           <SidebarMenuItem key={workflow.id}>
-            <SidebarMenuButton>
-              <WorkflowIcon />
-              <span>{workflow.name}</span>
+            <SidebarMenuButton
+              asChild
+              isActive={workflow.id === activeWorkflowId}
+            >
+              <Link href={`/workflows/${workflow.id}`}>
+                <span className="flex w-full items-center gap-2">
+                  <WorkflowIcon />
+                  <span>{workflow.name}</span>
+                </span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}

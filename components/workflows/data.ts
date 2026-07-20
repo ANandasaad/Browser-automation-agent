@@ -1,8 +1,10 @@
+"use server"
+
 import { desc, eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { workflows } from "@/lib/schema"
 
-export function listWorkflows(orgId: string) {
+export async function listWorkflows(orgId: string) {
   return db
     .select()
     .from(workflows)

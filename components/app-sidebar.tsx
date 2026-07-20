@@ -1,4 +1,5 @@
 import { OrganizationSwitcher, UserButton } from "@clerk/nextjs"
+import { auth } from "@clerk/nextjs/server"
 import {
   Sidebar,
   SidebarContent,
@@ -11,8 +12,9 @@ import {
 import { createWorkflowAction } from "./workflows/actions"
 import { NewWorkflowButton } from "./new-workflow-button"
 import { WorkflowSidebarList } from "./workflow-sidebar-list"
+export async function AppSidebar() {
+  const { orgId } = await auth()
 
-export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
@@ -26,7 +28,7 @@ export function AppSidebar() {
         <div className="px-3 pt-1 pb-3">
           <NewWorkflowButton createWorkflowAction={createWorkflowAction} />
         </div>
-        <WorkflowSidebarList />
+        <WorkflowSidebarList orgId={orgId} />
       </SidebarContent>
       <SidebarFooter>
         <UserButton />
