@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ADD COLUMN "name" text NOT NULL;

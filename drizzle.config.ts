@@ -1,22 +1,22 @@
+import { config } from "dotenv";
 import { defineConfig } from "drizzle-kit";
 
-const migrationUrl= process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
+config({ path: ".env.local" });
 
-if(!migrationUrl)
-{
-  throw new Error('DATABASE_URL_UNPOOLED (or DATABASE_URL) is not set in .evn.local')
+const migrationUrl = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
+
+if (!migrationUrl) {
+  throw new Error("DATABASE_URL_UNPOOLED (or DATABASE_URL) is not set in .env.local");
 }
-
-
 
 export default defineConfig({
   schema: "./lib/schema.ts",
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL!,
+    url: migrationUrl,
   },
-  casing: 'snake_case',
+  casing: "snake_case",
   verbose: true,
-  strict: true
+  strict: true,
 });
