@@ -4,7 +4,7 @@ import { ReactFlowProvider } from "@xyflow/react"
 import {getWorkflow} from "@/components/workflows/data"
 import { WorkflowShell } from "@/components/workflows/workflow-shell"
 import { Room } from "@/components/workflows/room"
-import { liveblocks } from "@/lib/liveblocks"
+import { getLiveblocks } from "@/lib/liveblocks"
 
 export default async function Page({
   params,
@@ -23,7 +23,7 @@ export default async function Page({
   
   if(!workflow) notFound()
 
-    await liveblocks.getOrCreateRoom(roomId, {
+    await getLiveblocks().getOrCreateRoom(roomId, {
       organizationId: orgId,
       defaultAccesses:[],
       groupsAccesses: {
