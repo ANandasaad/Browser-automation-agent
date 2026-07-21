@@ -1,0 +1,128 @@
+"use client"
+
+import { useEffect, useRef, useSyncExternalStore } from "react"
+import { useTheme } from "next-themes"
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  ConnectionLineType,
+  type Edge,
+  NodeTypes,
+  Panel
+} from "@xyflow/react"
+import { useLiveblocksFlow , Cursors} from "@liveblocks/react-flow"
+import {AvatarStack} from "@liveblocks/react-ui"
+import "@xyflow/react/dist/style.css";
+import "@liveblocks/react-flow/styles.css"
+import "@liveblocks/react-ui/styles.css";
+
+import {Spinner} from '@/components/ui/spinner'
+import {StepNode} from '@/components/workflows/step-node'
+import type {StepNodeType} from '@/components/workflows/nodes/node-registry'
+
+const nodeTypes: NodeTypes= {step: StepNode }
+
+export const canvasSize = { width: 0, height: 0 }
+
+function useMounted() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  )
+}
+
+const initialNodes: StepNodeType[] = [
+  {
+    id:"start",
+    type: "step",
+    position: {x:0, y:0},
+    data: {type: "start", kind: "trigger", title: "Start", values:{}}
+  }
+]
+  
+
+const initialEdges: Edge[] = [
+]
+
+export function Canvas() {
+  const { resolvedTheme } = useTheme()
+  const mounted = useMounted()
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const obs = new ResizeObserver(([entry]) => {
+      canvasSize.width = entry.contentRect.width
+      canvasSize.height = entry.contentRect.height
+    })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onDelete,
+    isLoading,
+  } = useLiveblocksFlow({
+    nodes: {
+      initial: initialNodes,
+    },
+    edges: {
+      initial: initialEdges,
+    },
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex size-full items-center justify-center">
+        <Spinner className="size-5 text-muted-foreground" />
+      </div>
+    )
+  }
+
+  return (
+    <div ref={containerRef} className="size-full">
+      <ReactFlow
+       nodeTypes={nodeTypes}
+        nodes={nodes ?? undefined}
+        edges={edges ?? undefined}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onDelete={onDelete}
+        colorMode={mounted && resolvedTheme === "dark" ? "dark" : "light"}
+        fitView
+        connectionLineType={ConnectionLineType.SmoothStep}
+        connectionLineStyle={{stroke : "var(--border)"}}
+        defaultEdgeOptions={{
+          type: "smoothstep",
+          style :{stroke : "var(--border)"}
+        }}
+        style={{
+          "--xy-background-color" : "var(--background)",
+          "--xy-edge-stroke-width": 2,
+          "--xy-connectionline-stroke-width":2,
+
+
+        }as React.CSSProperties}
+
+        maxZoom={1}
+      >
+        <Background />
+        <Controls />
+        <Cursors />
+        <Panel position="top-right">
+          <AvatarStack />
+        </Panel>
+        <MiniMap />
+      </ReactFlow>
+    </div>
+  )
+}
