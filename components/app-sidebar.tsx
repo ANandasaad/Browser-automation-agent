@@ -19,7 +19,11 @@ export async function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center justify-between">
-          <OrganizationSwitcher />
+          <OrganizationSwitcher
+          afterCreateOrganizationUrl='/'
+          afterSelectOrganizationUrl='/'
+          afterLeaveOrganizationUrl="/"
+          />
 
           <SidebarTrigger />
         </div>

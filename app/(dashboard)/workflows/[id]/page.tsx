@@ -1,10 +1,9 @@
-import Link from "next/link"
-import { db } from "@/lib/db"
-import { workflows } from "@/lib/schema"
-import { eq } from "drizzle-orm"
 import { notFound } from "next/navigation"
+import {auth} from "@clerk/nextjs/server"
+import {getWorkflow} from "@/components/workflows/data"
 import { WorkflowShell } from "@/components/workflows/workflow-shell"
 import { Room } from "@/components/workflows/room"
+import { liveblocks } from "@/lib/liveblocks"
 
 export default async function Page({
   params,
@@ -13,8 +12,29 @@ export default async function Page({
 }) {
   const { id } = await params
 
+  const {orgId}= await auth()
+
+  if(!orgId) notFound()
+
+  const roomId = `${orgId}:${id}`
+
+  const workflow = await getWorkflow(orgId, id)
+  
+  if(!workflow) notFound()
+
+    await liveblocks.getOrCreateRoom(roomId, {
+      organizationId: orgId,
+      defaultAccesses:[],
+      groupsAccesses: {
+        [orgId]:['room:write'],
+      },
+      metadata:{
+        title: workflow.name
+      }
+    })
+
   return (
-    <Room roomId={id}>
+    <Room roomId={roomId}>
       <WorkflowShell workflowId={id} />;
     </Room>
   )

@@ -16,6 +16,7 @@ import "@xyflow/react/dist/style.css";
 import "@liveblocks/react-flow/styles.css"
 import "@liveblocks/react-ui/styles.css";
 
+import {Spinner} from '@/components/ui/spinner'
 import {StepNode} from '@/components/workflows/step-node'
 import type {StepNodeType} from '@/components/workflows/nodes/node-registry'
 
@@ -52,6 +53,7 @@ export function Canvas() {
     onEdgesChange,
     onConnect,
     onDelete,
+    isLoading,
   } = useLiveblocksFlow({
     nodes: {
       initial: initialNodes,
@@ -60,6 +62,14 @@ export function Canvas() {
       initial: initialEdges,
     },
   })
+
+  if (isLoading) {
+    return (
+      <div className="flex size-full items-center justify-center">
+        <Spinner className="size-5 text-muted-foreground" />
+      </div>
+    )
+  }
 
   return (
     <div className="size-full">
