@@ -39,3 +39,9 @@ export async function createWorkflow(orgId: string, name: string) {
 
   return createdWorkflow
 }
+
+export async function deleteWorkflow(orgId: string, id: string) {
+  await db
+    .delete(workflows)
+    .where(and(eq(workflows.orgId, orgId), eq(workflows.id, id)))
+}

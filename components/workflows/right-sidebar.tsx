@@ -34,6 +34,7 @@ import {
   type StepNodeType,
 } from "@/components/workflows/nodes/node-registry"
 import { canvasSize } from "@/components/workflows/canvas"
+import { deleteWorkflowAction } from "@/components/workflows/actions"
 
 // This file builds up to the RightSidebar component exported at the bottom: a
 // header with workflow actions (delete, run), then two tabs — a Toolbar for
@@ -256,7 +257,9 @@ function Palette() {
 // ---------------------------------------------------------------------------
 
 // The "..." menu for workflow-level actions.
-function ActionsMenu() {
+function ActionsMenu({ workflowId }: { workflowId: string }) {
+  const [deleting, setDeleting] = useState(false)
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -267,13 +270,21 @@ function ActionsMenu() {
       <DropdownMenuContent align="start" className="min-w-48">
         <DropdownMenuItem
           variant="destructive"
+          disabled={deleting}
           className="text-xs [&_svg:not([class*='size-'])]:size-3.5"
-          onSelect={() => {
-            // TODO: delete the workflow, then navigate away.
+          onSelect={async () => {
+            setDeleting(true)
+            try {
+              await deleteWorkflowAction(workflowId)
+            } catch (e) {
+              if (e instanceof Error && "digest" in e && typeof e.digest === "string" && e.digest.startsWith("NEXT_REDIRECT")) throw e
+              toast.error("Failed to delete workflow")
+              setDeleting(false)
+            }
           }}
         >
           <Trash2 />
-          Delete workflow
+          {deleting ? "Deleting..." : "Delete workflow"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -300,7 +311,7 @@ function RunButton() {
 // The sidebar itself — header on top, then the Toolbar / Editor tabs.
 // ---------------------------------------------------------------------------
 
-export function RightSidebar({ onRunStarted }: { onRunStarted: (data: { runId: string; publicAccessToken: string }) => void }) {
+export function RightSidebar({ workflowId, onRunStarted }: { workflowId: string; onRunStarted: (data: { runId: string; publicAccessToken: string }) => void }) {
   const [tab, setTab] = useState("toolbar")
   const selected= useStore((s)=> s.nodes.find((n)=> n.selected)) as StepNodeType | undefined
   const [prevSelectedId, setPrevSelectedId]= useState(selected?.id)
@@ -321,7 +332,7 @@ export function RightSidebar({ onRunStarted }: { onRunStarted: (data: { runId: s
     >
       <Tabs value={tab} onValueChange={setTab} className="size-full gap-0">
         <div className="flex items-center justify-between border-b border-border p-2">
-          <ActionsMenu />
+          <ActionsMenu workflowId={workflowId} />
           <RunButton />
         </div>
         <TabsList className="m-2 w-fit bg-background">

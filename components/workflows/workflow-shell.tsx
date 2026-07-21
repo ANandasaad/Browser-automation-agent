@@ -35,7 +35,7 @@ export function WorkflowShell({ workflowId }: { workflowId: string }) {
       </ResizablePanel>
       <ResizableHandle />
       <ResizablePanel defaultSize="16rem" minSize="14rem" maxSize="36rem">
-        <RightSidebar onRunStarted={setCurrentRun} />
+        <RightSidebar workflowId={workflowId} onRunStarted={setCurrentRun} />
       </ResizablePanel>
     </ResizablePanelGroup>
   )
