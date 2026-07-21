@@ -96,7 +96,18 @@ function FieldInput({
   value: string
   onChange: (value: string) => void
 }) {
-  // TODO: support a multiline field variant (textarea).
+  if (field.multiline) {
+    return (
+      <textarea
+        id={field.key}
+        value={value}
+        placeholder={field.placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex min-h-[6rem] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      />
+    )
+  }
+
   return (
     <Input
       id={field.key}
@@ -132,6 +143,7 @@ function Inspector({ node }: { node: StepNodeType | undefined }) {
             <div key={field.key} className="flex flex-col gap-1.5">
               <Label htmlFor={field.key} className="text-xs">
                 {field.label}
+                {field.required && <span className="text-destructive">*</span>}
               </Label>
               <FieldInput
                 field={field}
@@ -290,11 +302,14 @@ function RunButton() {
 
 export function RightSidebar({ onRunStarted }: { onRunStarted: (data: { runId: string; publicAccessToken: string }) => void }) {
   const [tab, setTab] = useState("toolbar")
-
-  // TODO: read the currently selected node from React Flow.
   const selected= useStore((s)=> s.nodes.find((n)=> n.selected)) as StepNodeType | undefined
+  const [prevSelectedId, setPrevSelectedId]= useState(selected?.id)
 
-  // TODO: auto-switch to the Editor tab when the selection changes.
+  if(selected && selected.id !== prevSelectedId){
+    setPrevSelectedId(selected.id)
+    setTab("editor")
+  }
+
 
   return (
     <ResizablePanel
