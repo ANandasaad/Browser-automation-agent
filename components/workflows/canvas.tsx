@@ -1,6 +1,6 @@
 "use client"
 
-import { useSyncExternalStore } from "react"
+import { useEffect, useRef, useSyncExternalStore } from "react"
 import { useTheme } from "next-themes"
 import {
   ReactFlow,
@@ -23,6 +23,8 @@ import {StepNode} from '@/components/workflows/step-node'
 import type {StepNodeType} from '@/components/workflows/nodes/node-registry'
 
 const nodeTypes: NodeTypes= {step: StepNode }
+
+export const canvasSize = { width: 0, height: 0 }
 
 function useMounted() {
   return useSyncExternalStore(
@@ -48,6 +50,18 @@ const initialEdges: Edge[] = [
 export function Canvas() {
   const { resolvedTheme } = useTheme()
   const mounted = useMounted()
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const obs = new ResizeObserver(([entry]) => {
+      canvasSize.width = entry.contentRect.width
+      canvasSize.height = entry.contentRect.height
+    })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
   const {
     nodes,
     edges,
@@ -74,7 +88,7 @@ export function Canvas() {
   }
 
   return (
-    <div className="size-full">
+    <div ref={containerRef} className="size-full">
       <ReactFlow
        nodeTypes={nodeTypes}
         nodes={nodes ?? undefined}

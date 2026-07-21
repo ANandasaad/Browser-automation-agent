@@ -2,6 +2,9 @@
 
 import { useState } from "react"
 import { MoreHorizontal, Play, Trash2 } from "lucide-react"
+import { useReactFlow, useViewport, useStore } from "@xyflow/react"
+import { useLiveblocksFlow } from "@liveblocks/react-flow"
+import { toast } from "sonner"
 
 import {
   Accordion,
@@ -30,6 +33,7 @@ import {
   type StepNodeKind,
   type StepNodeType,
 } from "@/components/workflows/nodes/node-registry"
+import { canvasSize } from "@/components/workflows/canvas"
 
 // This file builds up to the RightSidebar component exported at the bottom: a
 // header with workflow actions (delete, run), then two tabs — a Toolbar for
@@ -105,6 +109,8 @@ function FieldInput({
 
 // The Editor tab: one input per field on the selected node, or an empty state.
 function Inspector({ node }: { node: StepNodeType | undefined }) {
+
+  const {updateNodeData} = useReactFlow<StepNodeType>()
   if (!node) {
     return (
       <Section title="Editor">
@@ -131,8 +137,9 @@ function Inspector({ node }: { node: StepNodeType | undefined }) {
                 field={field}
                 value={values[field.key] ?? ""}
                 onChange={(value) => {
-                  // TODO: save the edit back onto the selected node.
-                  void value
+                  updateNodeData(node.id, {
+                    values: {...values, [field.key]: value }
+                  })
                 }}
               />
             </div>
@@ -158,9 +165,40 @@ const definitions = Object.values(nodeRegistry)
 
 // The Toolbar tab: a button per node type that adds it to the canvas.
 function Palette() {
+  const { nodes, onNodesChange } = useLiveblocksFlow<StepNodeType>()
+  const { getViewport } = useReactFlow()
+  const viewport = useViewport()
+
   const add = (type: NodeType) => {
-    // TODO: add the clicked node to the canvas (one trigger max).
-    void type
+    const def = nodeRegistry[type]
+
+    if (def.kind === "trigger") {
+      const hasTrigger = nodes?.some((n) => n.data.kind === "trigger")
+      if (hasTrigger) {
+        toast.error("Only one trigger node is allowed")
+        return
+      }
+    }
+
+    const sameType = nodes?.filter((n) => n.data.type === type) ?? []
+    const nextNum = sameType.length + 1
+    const label = sameType.length > 0 ? `${def.label} ${nextNum}` : def.label
+
+    const x = -viewport.x / viewport.zoom + canvasSize.width / 2 / viewport.zoom
+    const y = -viewport.y / viewport.zoom + canvasSize.height / 2 / viewport.zoom
+
+    onNodesChange([
+      {
+        type: "add",
+        item: {
+          id: crypto.randomUUID(),
+          type: "step",
+          position: { x, y },
+          data: { type, kind: def.kind, title: label, values: {} },
+        },
+        index: nodes?.length ?? 0,
+      },
+    ])
   }
 
   return (
@@ -250,11 +288,11 @@ function RunButton() {
 // The sidebar itself — header on top, then the Toolbar / Editor tabs.
 // ---------------------------------------------------------------------------
 
-export function RightSidebar() {
+export function RightSidebar({ onRunStarted }: { onRunStarted: (data: { runId: string; publicAccessToken: string }) => void }) {
   const [tab, setTab] = useState("toolbar")
 
   // TODO: read the currently selected node from React Flow.
-  const selected: StepNodeType | undefined = undefined
+  const selected= useStore((s)=> s.nodes.find((n)=> n.selected)) as StepNodeType | undefined
 
   // TODO: auto-switch to the Editor tab when the selection changes.
 
