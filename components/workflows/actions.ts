@@ -6,7 +6,7 @@ import { redirect } from "next/navigation"
 
 import type { helloWorldTask } from "@/src/trigger/example"
 import { tasks } from "@trigger.dev/sdk"
-import { liveblocks } from "@/lib/liveblocks"
+import { getLiveblocks } from "@/lib/liveblocks"
 
 import { createWorkflow, deleteWorkflow } from "./data"
 
@@ -41,7 +41,7 @@ export async function deleteWorkflowAction(workflowId: string) {
 
   const roomId = `${orgId}:${workflowId}`
   try {
-    await liveblocks.deleteRoom(roomId)
+    await getLiveblocks().deleteRoom(roomId)
   } catch {
     // Room may not exist yet — ignore
   }
