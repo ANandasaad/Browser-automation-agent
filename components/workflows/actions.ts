@@ -5,10 +5,11 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
 import type { helloWorldTask } from "@/src/trigger/example"
-import { tasks } from "@trigger.dev/sdk"
+import { tasks, runs } from "@trigger.dev/sdk"
 import { getLiveblocks } from "@/lib/liveblocks"
 
-import { createWorkflow, deleteWorkflow } from "./data"
+import { createWorkflow, deleteWorkflow, saveWorkflowGraph } from "./data"
+import {WorkflowGraph} from '@/lib/schema'
 
 export async function createWorkflowAction(name: string) {
   const { orgId } = await auth()
@@ -23,7 +24,15 @@ export async function createWorkflowAction(name: string) {
   redirect(`/workflows/${workflow.id}`)
 }
 
-export async function runWorkflowAction() {
+export async function runWorkflowAction({id, graph}:{id:string, graph: WorkflowGraph}) {
+
+  const {orgId}= await auth()
+
+  if(!orgId){
+    throw new Error("No active organization")
+  }
+
+  await saveWorkflowGraph({orgId, id, graph})
   const handle = await tasks.trigger<typeof helloWorldTask>("hello-dashboard", {
     message: "Hello from my app!",
   })
@@ -48,4 +57,10 @@ export async function deleteWorkflowAction(workflowId: string) {
 
   revalidatePath("/", "layout")
   redirect("/")
+}
+
+export async function cancelWorkflowRunAction(runId: string){
+  const {orgId}= await auth()
+  if(!orgId) throw new Error("No active organization")
+    await runs.cancel(runId)
 }
