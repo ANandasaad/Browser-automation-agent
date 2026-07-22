@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState , useTransition} from "react"
 import { MoreHorizontal, Play, Trash2 } from "lucide-react"
 import { useReactFlow, useViewport, useStore } from "@xyflow/react"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
@@ -34,12 +34,9 @@ import {
   type StepNodeType,
 } from "@/components/workflows/nodes/node-registry"
 import { canvasSize } from "@/components/workflows/canvas"
-import { deleteWorkflowAction } from "@/components/workflows/actions"
+import { deleteWorkflowAction , runWorkflowAction } from "@/components/workflows/actions"
+import {validateGraph} from '@/components/workflows/lib/validate-graph'
 
-// This file builds up to the RightSidebar component exported at the bottom: a
-// header with workflow actions (delete, run), then two tabs — a Toolbar for
-// adding nodes and an Editor for tweaking the selected node. Each helper below is
-// defined just above the block that uses it.
 
 // ---------------------------------------------------------------------------
 // Shared pieces — used by both the Toolbar and the Editor.
@@ -292,14 +289,30 @@ function ActionsMenu({ workflowId }: { workflowId: string }) {
 }
 
 // Kicks off a run of the current workflow.
-function RunButton() {
+function RunButton({workflowId}:{workflowId: string}) {
+
+  const {getNodes, getEdges}= useReactFlow<StepNodeType>()
+  const [isPending, startTransition] = useTransition()
+
+
   return (
     <Button
       size="sm"
       variant="secondary"
       onClick={() => {
-        // TODO: validate the graph and run the workflow (toggle to Stop while running).
+        const graph= {nodes: getNodes(), edges: getEdges()}
+        const problems= validateGraph(graph)
+
+        if(problems.length>0){
+          toast.error(problems[0])
+          return
+        }
+
+        startTransition(async()=>{
+          await runWorkflowAction({id:workflowId, graph})
+        })
       }}
+      
     >
       <Play fill="primary" />
       Run
@@ -333,7 +346,7 @@ export function RightSidebar({ workflowId, onRunStarted }: { workflowId: string;
       <Tabs value={tab} onValueChange={setTab} className="size-full gap-0">
         <div className="flex items-center justify-between border-b border-border p-2">
           <ActionsMenu workflowId={workflowId} />
-          <RunButton />
+          <RunButton  workflowId={workflowId}/>
         </div>
         <TabsList className="m-2 w-fit bg-background">
           <TabsTrigger
