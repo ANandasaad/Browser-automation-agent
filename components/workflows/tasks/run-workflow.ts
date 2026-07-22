@@ -1,6 +1,7 @@
 import toposort from "toposort"
 import { logger, task } from "@trigger.dev/sdk"
-
+import { Stagehand } from "@browserbasehq/stagehand"
+import { nodeExecutors } from "../nodes/node-executors"
 import { getWorkflow } from "@/components/workflows/data"
 
 export const runWorkflowTask = task({
@@ -24,13 +25,35 @@ export const runWorkflowTask = task({
       )
       .filter((id) => connected.has(id))
 
-     logger.log(`Running workflow ${workflow.name}`, {steps: order.length})
-     
-     for(const id of order){
-        const node= byId.get(id)!
-        logger.log(`Running steps: ${node.data.title}`)
-     }
+    logger.log(`Running workflow ${workflow.name}`, { steps: order.length })
 
-     return {steps: order.length}
+    let stagehand: Stagehand | undefined
+
+    const getStagehand = async () => {
+      if (stagehand) return stagehand
+      stagehand = new Stagehand({
+        env: "BROWSERBASE",
+        apiKey: process.env.BROWSER_API_KEY!,
+        model: 'google/gemini-2.5-flash',
+
+        disablePino: true,
+      })
+
+      await stagehand.init()
+      return stagehand
+    }
+
+    for (const id of order) {
+      const node = byId.get(id)!
+      logger.log(`Running steps: ${node.data.title}`)
+
+      const executor = nodeExecutors[node.data.type]
+
+      if (executor) await executor({ values: node.data.values, getStagehand })
+    }
+
+    await stagehand?.close()
+
+    return { steps: order.length }
   },
 })
