@@ -1,8 +1,8 @@
 "use client"
 
 import { useRealtimeRun } from "@trigger.dev/react-hooks"
-import type { helloWorldTask } from "@/src/trigger/example"
 import { Badge } from "@/components/ui/badge"
+import { runWorkflowTask } from "./tasks/run-workflow"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { LoaderCircleIcon, CheckCircleIcon, XCircleIcon } from "lucide-react"
 
@@ -25,7 +25,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 }
 
 export function RunFeedback({ runId, publicAccessToken }: RunFeedbackProps) {
-  const { run, error } = useRealtimeRun<typeof helloWorldTask>(runId, {
+  const { run, error } = useRealtimeRun<typeof runWorkflowTask>(runId, {
     accessToken: publicAccessToken,
   })
 
